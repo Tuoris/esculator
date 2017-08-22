@@ -1,0 +1,3 @@
+NPV_CALCULATION_DURATION = 20  # accounting period, years
+NPV_PERIODS = 21
+DAYS_PER_YEAR = 365
