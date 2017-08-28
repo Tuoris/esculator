@@ -79,12 +79,9 @@ class NPVCalculationTest(unittest.TestCase):
             )
 
 
-def _str(number, max_length=15):
+def _str(number, precision=11):
     if number.__class__.__name__ == 'Fraction':
         number = float(number)
-    number_str = '{:.{}f}'.format(number, max_length)
-    integer_part, _ = number_str.split('.')
-    precision = max_length - len(integer_part)
     return '{:.{}f}'.format(number, precision)
 
 
