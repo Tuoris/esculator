@@ -1,34 +1,34 @@
 from datetime import date
 from fractions import Fraction
-from esculator.constants import DAYS_PER_YEAR, NPV_CALCULATION_DURATION
 
 
 def calculate_contract_duration(
         contract_duration_years,
         contract_duration_days,
-        days_per_year=DAYS_PER_YEAR):
+        days_per_year):
     '''Calculate contract duration in days'''
     return contract_duration_years * days_per_year + contract_duration_days
 
 
 def calculate_days_with_cost_reduction(
         announcement_date,
-        days_per_year=DAYS_PER_YEAR,
-        ):
-    first_year_days = (date(announcement_date.year, 12, 31) - announcement_date).days
-    return [first_year_days] + [days_per_year] * NPV_CALCULATION_DURATION
+        days_per_year,
+        npv_calculation_duration):
+    first_year_days = (
+        date(announcement_date.year, 12, 31) - announcement_date).days
+    return [first_year_days] + [days_per_year] * npv_calculation_duration
 
 
-def calculate_days_for_discount_rate(days_with_cost_reduction):
+def calculate_days_for_discount_rate(days_with_cost_reduction, days_per_year):
     days = days_with_cost_reduction[:-1]
-    days.append(DAYS_PER_YEAR - days[0])
+    days.append(days_per_year - days[0])
     return days
 
 
 def calculate_discount_rate(
         days_for_discount_rate,
         nbu_discount_rate,
-        days_per_year=DAYS_PER_YEAR):
+        days_per_year):
     '''Calculates discount rate according to the law'''
 
     return Fraction(str(nbu_discount_rate)) * Fraction(days_for_discount_rate, days_per_year)
@@ -37,7 +37,7 @@ def calculate_discount_rate(
 def calculate_discount_rates(
         days_for_discount_rates,
         nbu_discount_rate,
-        days_per_year=DAYS_PER_YEAR):
+        days_per_year):
     '''Calculates discount rates from days_for_discount_rates list'''
 
     return [
@@ -53,7 +53,7 @@ def calculate_discount_coef(discount_rates):
     discount_coef = []
     coefficient = Fraction(1)
     for i in discount_rates:
-        coefficient = Fraction(coefficient, (Fraction(1)+Fraction(i)))
+        coefficient = Fraction(coefficient, (Fraction(1) + Fraction(i)))
         discount_coef.append(coefficient)
     return discount_coef
 
@@ -61,12 +61,14 @@ def calculate_discount_coef(discount_rates):
 def calculate_days_with_payments(
         contract_duration,
         days_with_cost_reduction,
-        days_per_year=DAYS_PER_YEAR):
+        days_per_year,
+        npv_calculation_duration):
     days = [min(contract_duration, days_with_cost_reduction[0])]
     contract_duration -= days[0]
-    days += [days_per_year] * (contract_duration // days_per_year) + [contract_duration % days_per_year]
-    if len(days) < NPV_CALCULATION_DURATION + 1:
-        days += [0] * (NPV_CALCULATION_DURATION + 1 - len(days))
+    days += [days_per_year] * (contract_duration //
+                               days_per_year) + [contract_duration % days_per_year]
+    if len(days) < npv_calculation_duration + 1:
+        days += [0] * (npv_calculation_duration + 1 - len(days))
     return days
 
 
@@ -123,8 +125,11 @@ def calculate_income(client_cost_reductions, days_for_discount_rate, days_with_c
     count = 0
     income = []
     for i in client_cost_reductions:
-        income.append(Fraction(str(i)) * Fraction(Fraction(str(days_for_discount_rate[count])),
-                      Fraction(str(days_with_cost_reduction[count]))) - Fraction(str(client_payments[count])))
+        income.append(
+            Fraction(str(i)) * Fraction(
+                Fraction(str(days_for_discount_rate[count])),
+                Fraction(str(days_with_cost_reduction[count]))
+            ) - Fraction(str(client_payments[count])))
         count += 1
     return income
 
@@ -133,18 +138,22 @@ def calculate_discounted_income(coef_discount, income_customer):
     count = 0
     discounted_income = []
     for i in coef_discount:
-        discounted_income.append(i*income_customer[count])
+        discounted_income.append(i * income_customer[count])
         count += 1
     return discounted_income
 
 
-def calculate_amount_perfomance(data):
-    contract_duration = calculate_contract_duration(data['contractDuration']['years'], data['contractDuration']['days'])
-    days_with_cost_reduction = calculate_days_with_cost_reduction(data['announcementDate'])
-    days_for_discount_rate = calculate_days_for_discount_rate(days_with_cost_reduction)
-    discount_rates = calculate_discount_rates(days_for_discount_rate, data['NBUdiscountRate'])
+def calculate_amount_perfomance(
+        data,
+        days_per_year=365,
+        npv_calculation_duration=20):
+
+    contract_duration = calculate_contract_duration(data['contractDuration']['years'], data['contractDuration']['days'], days_per_year)
+    days_with_cost_reduction = calculate_days_with_cost_reduction(data['announcementDate'], days_per_year, npv_calculation_duration)
+    days_for_discount_rate = calculate_days_for_discount_rate(days_with_cost_reduction, days_per_year)
+    discount_rates = calculate_discount_rates(days_for_discount_rate, data['NBUdiscountRate'], days_per_year)
     discount_coef = calculate_discount_coef(discount_rates)
-    days_with_payments = calculate_days_with_payments(contract_duration,  days_for_discount_rate)
+    days_with_payments = calculate_days_with_payments(contract_duration,  days_for_discount_rate, days_per_year, npv_calculation_duration)
     payments = calculate_payments(data['yearlyPaymentsPercentage'], data['annualCostsReduction'], days_with_payments,
                                   days_for_discount_rate)
     income = calculate_income(data['annualCostsReduction'], days_for_discount_rate, days_with_cost_reduction, payments)
@@ -152,11 +161,15 @@ def calculate_amount_perfomance(data):
     return sum(discounted_income)
 
 
-def calculate_amount_contract(data):
-    contract_duration = calculate_contract_duration(data['contractDuration']['years'], data['contractDuration']['days'])
-    days_with_cost_reduction = calculate_days_with_cost_reduction(data['announcementDate'])
-    days_for_discount_rate = calculate_days_for_discount_rate(days_with_cost_reduction)
-    days_with_payments = calculate_days_with_payments(contract_duration,  days_for_discount_rate)
+def calculate_amount_contract(
+        data,
+        days_per_year=365,
+        npv_calculation_duration=20):
+
+    contract_duration = calculate_contract_duration(data['contractDuration']['years'], data['contractDuration']['days'], days_per_year)
+    days_with_cost_reduction = calculate_days_with_cost_reduction(data['announcementDate'], days_per_year, npv_calculation_duration)
+    days_for_discount_rate = calculate_days_for_discount_rate(days_with_cost_reduction, days_per_year)
+    days_with_payments = calculate_days_with_payments(contract_duration,  days_for_discount_rate, days_per_year, npv_calculation_duration)
     payments = calculate_payments(data['yearlyPaymentsPercentage'], data['annualCostsReduction'], days_with_payments,
                                   days_for_discount_rate)
     return sum(payments)
