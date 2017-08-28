@@ -138,10 +138,6 @@ def calculate_discounted_income(coef_discount, income_customer):
     return discounted_income
 
 
-def calculate_sum(data):
-    return sum(data)
-
-
 def calculate_amount_perfomance(data):
     contract_duration = calculate_contract_duration(data['contractDuration']['years'], data['contractDuration']['days'])
     days_with_cost_reduction = calculate_days_with_cost_reduction(data['announcementDate'])
@@ -153,8 +149,7 @@ def calculate_amount_perfomance(data):
                                   days_for_discount_rate)
     income = calculate_income(data['annualCostsReduction'], days_for_discount_rate, days_with_cost_reduction, payments)
     discounted_income = calculate_discounted_income(discount_coef, income)
-    npv = calculate_sum(discounted_income)
-    return float(npv)
+    return sum(discounted_income)
 
 
 def calculate_amount_contract(data):
@@ -164,5 +159,4 @@ def calculate_amount_contract(data):
     days_with_payments = calculate_days_with_payments(contract_duration,  days_for_discount_rate)
     payments = calculate_payments(data['yearlyPaymentsPercentage'], data['annualCostsReduction'], days_with_payments,
                                   days_for_discount_rate)
-    tcp = calculate_sum(payments)
-    return float(tcp)
+    return sum(payments)
