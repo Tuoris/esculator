@@ -17,65 +17,96 @@ class NPVCalculationTest(unittest.TestCase):
     """
 
     def test_contract_duration_change(self):
-        data = deepcopy(CONTRACT_DURATION_CHANGING)
-        contract_durations = data.pop('contractDuration')
+        test_data = deepcopy(CONTRACT_DURATION_CHANGING)
+        contract_durations = test_data.pop('contractDuration')
 
         for i, contract_duration in enumerate(contract_durations):
-            data['contractDuration'] = contract_duration
 
-            amount_perfomance = calculate_amount_perfomance(data)
+            amount_perfomance = calculate_amount_perfomance(
+                contract_duration['years'],
+                contract_duration['days'],
+                test_data['yearlyPaymentsPercentage'],
+                test_data['annualCostsReduction'],
+                test_data['announcementDate'],
+                test_data['NBUdiscountRate'],
+            )
             self.assertEqual(
                 _str(amount_perfomance),
-                _str(CONTRACT_DURATION_CHANGING
-                     ['calculated'][i]['amountPerformance'])
+                _str(test_data['calculated'][i]['amountPerformance'])
             )
 
-            amount_contract = calculate_amount_contract(data)
+            amount_contract = calculate_amount_contract(
+                contract_duration['years'],
+                contract_duration['days'],
+                test_data['yearlyPaymentsPercentage'],
+                test_data['annualCostsReduction'],
+                test_data['announcementDate'],
+            )
             self.assertEqual(
                 _str(amount_contract),
-                _str(CONTRACT_DURATION_CHANGING
-                     ['calculated'][i]['amountContract'])
+                _str(test_data['calculated'][i]['amountContract'])
             )
 
     def test_announcement_date_change(self):
-        data = deepcopy(ANNOUNCEMENT_DATE_CHANGING)
-        announcement_dates = data.pop('announcementDate')
+        test_data = deepcopy(ANNOUNCEMENT_DATE_CHANGING)
+        announcement_dates = test_data.pop('announcementDate')
 
         for i, announcement_date in enumerate(announcement_dates):
-            data['announcementDate'] = announcement_date
 
-            amount_perfomance = calculate_amount_perfomance(data)
+            amount_perfomance = calculate_amount_perfomance(
+                test_data['contractDuration']['years'],
+                test_data['contractDuration']['days'],
+                test_data['yearlyPaymentsPercentage'],
+                test_data['annualCostsReduction'],
+                announcement_date,
+                test_data['NBUdiscountRate'],
+            )
             self.assertEqual(
                 _str(amount_perfomance),
-                _str(ANNOUNCEMENT_DATE_CHANGING
-                     ['calculated'][i]['amountPerformance'])
+                _str(test_data['calculated'][i]['amountPerformance'])
             )
-            amount_contract = calculate_amount_contract(data)
+
+            amount_contract = calculate_amount_contract(
+                test_data['contractDuration']['years'],
+                test_data['contractDuration']['days'],
+                test_data['yearlyPaymentsPercentage'],
+                test_data['annualCostsReduction'],
+                announcement_date,
+            )
             self.assertEqual(
                 _str(amount_contract),
-                _str(ANNOUNCEMENT_DATE_CHANGING
-                     ['calculated'][i]['amountContract'])
+                _str(test_data['calculated'][i]['amountContract'])
             )
 
     def test_payments_percentage_change(self):
-        data = deepcopy(PAYMENTS_PERCENTAGE_CHANGING)
-        payments_percentages = data.pop('yearlyPaymentsPercentage')
+        test_data = deepcopy(PAYMENTS_PERCENTAGE_CHANGING)
+        payments_percentages = test_data.pop('yearlyPaymentsPercentage')
 
         for i, payments_percentage in enumerate(payments_percentages):
-            data['yearlyPaymentsPercentage'] = payments_percentage
 
-            amount_perfomance = calculate_amount_perfomance(data)
+            amount_perfomance = calculate_amount_perfomance(
+                test_data['contractDuration']['years'],
+                test_data['contractDuration']['days'],
+                payments_percentage,
+                test_data['annualCostsReduction'],
+                test_data['announcementDate'],
+                test_data['NBUdiscountRate'],
+            )
             self.assertEqual(
                 _str(amount_perfomance),
-                _str(PAYMENTS_PERCENTAGE_CHANGING
-                     ['calculated'][i]['amountPerformance'])
+                _str(test_data['calculated'][i]['amountPerformance'])
             )
 
-            amount_contract = calculate_amount_contract(data)
+            amount_contract = calculate_amount_contract(
+                test_data['contractDuration']['years'],
+                test_data['contractDuration']['days'],
+                payments_percentage,
+                test_data['annualCostsReduction'],
+                test_data['announcementDate'],
+            )
             self.assertEqual(
                 _str(amount_contract),
-                _str(PAYMENTS_PERCENTAGE_CHANGING
-                     ['calculated'][i]['amountContract'])
+                _str(test_data['calculated'][i]['amountContract'])
             )
 
 
