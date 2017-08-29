@@ -63,13 +63,23 @@ def calculate_days_with_payments(
         days_with_cost_reduction,
         days_per_year,
         npv_calculation_duration):
-    days = [min(contract_duration, days_with_cost_reduction[0])]
-    contract_duration -= days[0]
-    days += [days_per_year] * (contract_duration //
-                               days_per_year) + [contract_duration % days_per_year]
-    if len(days) < npv_calculation_duration + 1:
-        days += [0] * (npv_calculation_duration + 1 - len(days))
-    return days
+
+    first_period_duration = min(contract_duration, days_with_cost_reduction[0])
+    full_periods_count, last_period_duration = divmod(
+        contract_duration - first_period_duration,
+        days_per_year,
+    )
+
+    # The empty periods count is equal to npv_calculation_duration + 1 without
+    # all non empty period count (full, first and last periods)
+    empty_periods_count = npv_calculation_duration + 1 - full_periods_count - 2
+
+    days_with_payments = [first_period_duration]
+    days_with_payments += [days_per_year] * full_periods_count
+    days_with_payments += [last_period_duration]
+    days_with_payments += [0] * empty_periods_count
+
+    return days_with_payments
 
 
 def calculate_payment(
