@@ -154,32 +154,106 @@ def calculate_discounted_income(coef_discount, income_customer):
 
 
 def calculate_amount_perfomance(
-        data,
+        contract_duration_years,
+        contract_duration_days,
+        yearly_payments_percentage,
+        annual_costs_reduction,
+        announcement_date,
+        nbu_discount_rate,
         days_per_year=365,
         npv_calculation_duration=20):
 
-    contract_duration = calculate_contract_duration(data['contractDuration']['years'], data['contractDuration']['days'], days_per_year)
-    days_with_cost_reduction = calculate_days_with_cost_reduction(data['announcementDate'], days_per_year, npv_calculation_duration)
-    days_for_discount_rate = calculate_days_for_discount_rate(days_with_cost_reduction, days_per_year)
-    discount_rates = calculate_discount_rates(days_for_discount_rate, data['NBUdiscountRate'], days_per_year)
+    contract_duration = calculate_contract_duration(
+        contract_duration_years,
+        contract_duration_days,
+        days_per_year
+    )
+
+    days_with_cost_reduction = calculate_days_with_cost_reduction(
+        announcement_date,
+        days_per_year,
+        npv_calculation_duration
+    )
+
+    days_for_discount_rate = calculate_days_for_discount_rate(
+        days_with_cost_reduction,
+        days_per_year
+    )
+
+    discount_rates = calculate_discount_rates(
+        days_for_discount_rate,
+        nbu_discount_rate,
+        days_per_year
+    )
+
     discount_coef = calculate_discount_coef(discount_rates)
-    days_with_payments = calculate_days_with_payments(contract_duration,  days_for_discount_rate, days_per_year, npv_calculation_duration)
-    payments = calculate_payments(data['yearlyPaymentsPercentage'], data['annualCostsReduction'], days_with_payments,
-                                  days_for_discount_rate)
-    income = calculate_income(data['annualCostsReduction'], days_for_discount_rate, days_with_cost_reduction, payments)
-    discounted_income = calculate_discounted_income(discount_coef, income)
+
+    days_with_payments = calculate_days_with_payments(
+        contract_duration,
+        days_for_discount_rate,
+        days_per_year,
+        npv_calculation_duration
+    )
+
+    payments = calculate_payments(yearly_payments_percentage,
+        annual_costs_reduction,
+        days_with_payments,
+        days_for_discount_rate
+    )
+
+    income = calculate_income(
+        annual_costs_reduction,
+        days_for_discount_rate,
+        days_with_cost_reduction,
+        payments
+    )
+
+    discounted_income = calculate_discounted_income(
+        discount_coef,
+        income
+    )
+
     return sum(discounted_income)
 
 
 def calculate_amount_contract(
-        data,
+        contract_duration_years,
+        contract_duration_days,
+        yearly_payments_percentage,
+        annual_costs_reduction,
+        announcement_date,
         days_per_year=365,
         npv_calculation_duration=20):
 
-    contract_duration = calculate_contract_duration(data['contractDuration']['years'], data['contractDuration']['days'], days_per_year)
-    days_with_cost_reduction = calculate_days_with_cost_reduction(data['announcementDate'], days_per_year, npv_calculation_duration)
-    days_for_discount_rate = calculate_days_for_discount_rate(days_with_cost_reduction, days_per_year)
-    days_with_payments = calculate_days_with_payments(contract_duration,  days_for_discount_rate, days_per_year, npv_calculation_duration)
-    payments = calculate_payments(data['yearlyPaymentsPercentage'], data['annualCostsReduction'], days_with_payments,
-                                  days_for_discount_rate)
+    contract_duration = calculate_contract_duration(
+        contract_duration_years,
+        contract_duration_days,
+        days_per_year
+    )
+
+    days_with_cost_reduction = calculate_days_with_cost_reduction(
+        announcement_date,
+        days_per_year,
+        npv_calculation_duration
+    )
+
+    days_for_discount_rate = calculate_days_for_discount_rate(
+        days_with_cost_reduction,
+        days_per_year
+    )
+
+    days_with_payments = calculate_days_with_payments(
+        contract_duration,
+        days_for_discount_rate,
+        days_per_year,
+        npv_calculation_duration
+    )
+
+    payments = calculate_payments(
+        yearly_payments_percentage,
+        annual_costs_reduction,
+        days_with_payments,
+        days_for_discount_rate
+    )
+
     return sum(payments)
